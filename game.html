@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickable Pool Balls</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #0d5c3a;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .table-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            background-color: #0a4d30;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 12px solid #4a2e1b;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            height: auto;
+            max-width: 800px;
+            touch-action: manipulation;
+        }
+
+        #output {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* History Log Panel */
+        .history-container {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .history-container h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-list li {
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Modal Overlay Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        /* Interactive Table Frame inside Modal */
+        .pocket-table {
+            position: relative;
+            width: 100%;
+            padding-top: 50%; /* 2:1 ratio for pool table */
+            background-color: #0a4d30;
+            border: 12px solid #4a2e1b;
+            border-radius: 6px;
+            margin: 15px 0;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Interactive Pocket Buttons */
+        .pocket {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            background-color: #000;
+            border: 2px solid #666;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .pocket:active {
+            transform: translate(-50%, -50%) scale(1.15);
+            background-color: #f9c80e;
+            color: #000;
+        }
+
+        /* Target Positions for 6 Pockets */
+        .pocket.tl { top: 0%; left: 0%; }
+        .pocket.tc { top: 0%; left: 50%; }
+        .pocket.tr { top: 0%; left: 100%; }
+        .pocket.bl { top: 100%; left: 0%; }
+        .pocket.bc { top: 100%; left: 50%; }
+        .pocket.br { top: 100%; left: 100%; }
+
+        .btn-cancel {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="table-container">
+        <canvas id="poolCanvas" width="800" height="400"></canvas>
+    </div>
+    <div id="output">Click a ball!</div>
+
+    <div class="history-container">
+        <h3>Potted Log</h3>
+        <ol id="historyList" class="history-list"></ol>
+    </div>
+
+    <div id="pocketModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Select Pocket</h2>
+            <p>Where was this ball potted?</p>
+            
+            <div class="pocket-table">
+                <button class="pocket tl" onclick="selectPocket('Top Left')">TL</button>
+                <button class="pocket tc" onclick="selectPocket('Top Center')">TC</button>
+                <button class="pocket tr" onclick="selectPocket('Top Right')">TR</button>
+                <button class="pocket bl" onclick="selectPocket('Bottom Left')">BL</button>
+                <button class="pocket bc" onclick="selectPocket('Bottom Center')">BC</button>
+                <button class="pocket br" onclick="selectPocket('Bottom Right')">BR</button>
+            </div>
+
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('poolCanvas');
+        const ctx = canvas.getContext('2d');
+        const output = document.getElementById('output');
+        const modal = document.getElementById('pocketModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const historyList = document.getElementById('historyList');
+
+        const BALL_RADIUS = 30;
+        let selectedBall = null;
+        
+        // Array to store the chronological history record
+        const potHistory = [];
+
+        const ballColors = [
+            "#f9c80e", "#004e98", "#e63946", "#4a148c", 
+            "#f77f00", "#1b4332", "#941b0c", "#111111", 
+            "#f9c80e", "#004e98", "#e63946", "#4a148c", 
+            "#f77f00", "#1b4332", "#941b0c"
+        ];
+
+        let balls = [];
+        const startX = 180;
+        const startY = 200;
+        let ballIndex = 0;
+
+        for (let col = 0; col < 5; col++) {
+            for (let row = 0; row <= col; row++) {
+                if (ballIndex >= 15) break;
+
+                const x = startX + col * (BALL_RADIUS * 1.732); 
+                const y = startY + (row - col / 2) * (BALL_RADIUS * 2);
+
+                balls.push({
+                    number: ballIndex + 1,
+                    x: x,
+                    y: y,
+                    color: ballColors[ballIndex],
+                    isStripe: ballIndex >= 8
+                });
+                ballIndex++;
+            }
+        }
+
+        function drawTable() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            balls.forEach(ball => {
+                ctx.save();
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 3;
+                ctx.shadowOffsetY = 5;
+
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = ball.isStripe ? "#ffffff" : ball.color;
+                ctx.fill();
+                ctx.closePath();
+                ctx.restore();
+
+                if (ball.isStripe) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+                    ctx.clip();
+
+                    ctx.fillStyle = ball.color;
+                    ctx.fillRect(ball.x - BALL_RADIUS, ball.y - BALL_RADIUS/2, BALL_RADIUS * 2, BALL_RADIUS);
+                    ctx.closePath();
+                    ctx.restore();
+                }
+
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, BALL_RADIUS * 0.45, 0, Math.PI * 2);
+                ctx.fillStyle = "#ffffff";
+                ctx.fill();
+                ctx.closePath();
+
+                ctx.fillStyle = "#000000";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(ball.number, ball.x, ball.y);
+            });
+        }
+
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const mouseX = (event.clientX - rect.left) * scaleX;
+            const mouseY = (event.clientY - rect.top) * scaleY;
+
+            let clickedBall = null;
+
+            balls.forEach(ball => {
+                const distance = Math.sqrt((mouseX - ball.x) ** 2 + (mouseY - ball.y) ** 2);
+                if (distance <= BALL_RADIUS) {
+                    clickedBall = ball;
+                }
+            });
+
+            if (clickedBall) {
+                selectedBall = clickedBall;
+                modalTitle.innerText = `Ball #${selectedBall.number} Selected`;
+                modal.style.display = 'flex';
+            }
+        });
+
+        function selectPocket(pocketName) {
+            if (selectedBall) {
+                const type = selectedBall.number === 8 ? "Solid" : (selectedBall.isStripe ? "Stripe" : "Solid");
+                
+                // Record the potted event into the tracking array
+                const record = {
+                    order: potHistory.length + 1,
+                    ballNumber: selectedBall.number,
+                    type: type,
+                    pocket: pocketName
+                };
+                potHistory.push(record);
+
+                // Update UI status text
+                output.innerText = `Ball #${selectedBall.number} (${type}) potted into ${pocketName}!`;
+
+                // Remove the ball from active rendering list
+                balls = balls.filter(ball => ball.number !== selectedBall.number);
+
+                // Re-render canvas and update history UI list
+                drawTable();
+                updateHistoryUI();
+            }
+            closeModal();
+        }
+
+        function updateHistoryUI() {
+            historyList.innerHTML = "";
+            potHistory.forEach(item => {
+                const li = document.createElement("li");
+                li.innerHTML = `<span><strong>#${item.order}</strong> — Ball ${item.ballNumber} (${item.type})</span> <span>${item.pocket}</span>`;
+                historyList.appendChild(li);
+            });
+            // Auto-scroll to bottom of list
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            selectedBall = null;
+        }
+
+        drawTable();
+    </script>
+</body>
+</html>
