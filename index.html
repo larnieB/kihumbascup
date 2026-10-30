@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Leaderboard Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .player-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex: 1;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Step 1: Define Number of Players -->
+    <div class="card">
+        <h3>1. Setup Players</h3>
+        <label for="playerCount">How many players? </label>
+        <input type="number" id="playerCount" min="1" value="3" style="width: 80px; flex: none;">
+        <button onclick="generateFields()">Generate Inputs</button>
+    </div>
+
+    <!-- Step 2: Dynamic Input Fields -->
+    <div class="card" id="inputSection" style="display: none;">
+        <h3>2. Enter Names and Points</h3>
+        <div id="playerFieldsContainer"></div>
+        <button onclick="calculateLeaderboard()">Submit & Rank</button>
+    </div>
+
+    <!-- Step 3: Results Leaderboard -->
+    <div class="card" id="resultsSection" style="display: none;">
+        <h3>3. Leaderboard Standings</h3>
+        <table id="leaderboardTable">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player Name</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        function generateFields() {
+            const count = parseInt(document.getElementById('playerCount').value);
+            const container = document.getElementById('playerFieldsContainer');
+            
+            if (isNaN(count) || count < 1) {
+                alert('Please enter a valid number of players.');
+                return;
+            }
+
+            // Clear previous inputs and reset sections
+            container.innerHTML = '';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            // Generate rows dynamically
+            for (let i = 1; i <= count; i++) {
+                const row = document.createElement('div');
+                row.className = 'player-row';
+                row.innerHTML = `
+                    <span>#${i}</span>
+                    <input type="text" class="player-name" placeholder="Player ${i} Name" required>
+                    <input type="number" class="player-points" placeholder="Points" value="0" required>
+                `;
+                container.appendChild(row);
+            }
+
+            // Show the inputs block
+            document.getElementById('inputSection').style.display = 'block';
+        }
+
+        async function calculateLeaderboard() {
+    const nameInputs = document.querySelectorAll('.player-name');
+    const pointInputs = document.querySelectorAll('.player-points');
+    const playersData = [];
+
+    // Gather inputs into local payload array
+    nameInputs.forEach((input, index) => {
+        const name = input.value.trim() || `Player ${index + 1}`;
+        const points = parseFloat(pointInputs[index].value) || 0;
+        playersData.push({ name, points });
+    });
+
+    try {
+        // Send data directly to your new PHP backend
+        const response = await fetch('http://localhost:8080/vintageLeague/leaderboard.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(playersData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server returned status code ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            // Populate the table using the backend-sorted data
+            const tbody = document.querySelector('#leaderboardTable tbody');
+            tbody.innerHTML = '';
+
+            result.data.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${index + 1}</strong></td>
+                    <td>${player.name}</td>
+                    <td>${player.points}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Show results block
+            document.getElementById('resultsSection').style.display = 'block';
+        } else {
+            alert('Error from server: ' + result.message);
+        }
+
+    } catch (error) {
+        console.error('Submission failed:', error);
+        alert('Failed to connect to the backend server.');
+    }
+}
+
+    </script>
+</body>
+</html>
