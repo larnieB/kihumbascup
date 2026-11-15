@@ -1,0 +1,47 @@
+09/10/2026
+
+   - First record of a game. For a while, I have been trying out things that unknown to me at the time
+   would be instrumental to my first implementation of kihumbascup 1.0.0. I remember that I started with
+   photography around vintage which itself was something I had started even way earlier with some vintage
+   videos, taking photos around thika and building the liasam website. Photos of the game results have 
+   been instrumental as they allow me to take snapshots of how games end. Then later at home, I can analyse 
+   them and come up with the days summary which I then use to update the database. 
+
+   when I was first thinking of this, I knew that input from the real world and into the database was 
+   going to be a challenge. My first thought was the use of specialized cameras that can track ball 
+   movement and feed that data into the game. This ofcourse requires resources (both knowledge and financial wise) 
+   that I don't possess at the moment. So I resulted into the simpler method of using images which also 
+   has the advantage of keeping records as evidence of games which in turn reduces disputes. I then 
+   analysed the images 09/10/2026 and came up with my first Raw Data Table(RDT). Then from the RDT I 
+   can come up with the Day's summary. Summaries as before date 30 OCT 2026 just  had two datasets, 
+   points (later Participation Points PP), and games (later Total Games TG). This being the first time
+   doing this, I immediately noticed some problems like image quality, missing games etc. (see argument
+   on date 09/10/2026).
+    
+10/10/2026
+
+  -Second record of a game. I repeated what I did the previous day and I came up with a table with the 
+  following fields name, points, average, games, days, initials, marks marks average. It is clear at this
+  point that all the data points are useful but for different purposes. One of the purpose is a leaderboard
+  for the public and two is that with this data, I can make deductions about the games that are played, the
+  players and enable me make better and informed decisions. So I had to seperate Public data and non-public data.
+  
+                             THE REWARD SYSTEM   
+ In the beginning, I used a participation reward system to award points. Now, basically, with this system, I am spending time
+ and effort to record game data, sanitize it and present it in an easy to understand way. This is information and
+ with information, comes responsibility of knowing who you share which information with. participation information tends to
+ share information about how much time a player spends in vintage in a direct manner(days and games played) which people would not really 
+ appreciate  .
+ Also the participation reward system rewards participation and not winning so a player will have more points just by playing more games even if they
+ don't win as much. So I had to change it to a winning reward system. At first, I thought of having two tables, one which I called
+ participation table and the other one I called a leaderboard. But I just added some fields to hold win data. (Win Points WP 
+ and Games won GW). but using code I am able to only show the fields that made up the leaderboard.
+
+                                  CODING
+On Friday 09/10/2026, I created a html file called Dynamic leaderboard Generator. This serves as an interface for 
+inputing the game data into the database. It's functionality is that you input number of players then it dynamically
+generates input fields. The first version of this file just had two input fields, (name and points). This file
+can also be used to input cummlative game data for and period of time and any number of games. If I can be able
+to use this file to input game data after each game, I would eliminate the need for images, RDT and Day's summary. But It isn't 
+applicable when you are working alone given the nature of chalking were there isn't enough time between Games
+to be able to feed that data. This would need extra hands.
