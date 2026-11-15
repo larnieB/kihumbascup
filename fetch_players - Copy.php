@@ -65,6 +65,72 @@ try {
             text-align: center;
         }
 
+        /* Filter Bar Styling (Inspired by phpMyAdmin) */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            background: #ffffff;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e0e0e0;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2e7d32;
+            white-space: nowrap;
+        }
+
+        .filter-group input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group input:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+        }
+
+        .clear-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: none; /* Hidden until user types */
+        }
+
+        .clear-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .match-count {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
         /* The Magic Wrapper: If zoom forces the table to grow wider than the screen, 
            this card captures it safely and allows horizontal scrolling inside the card only. */
         .table-wrapper {
@@ -143,9 +209,19 @@ try {
     <div class="leaderboard-container">
         <h2>🏆 Kihumbas Cup Player Leaderboard</h2>
 
+          <!-- Search / Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="rowFilter">Filter rows:</label>
+                <input type="text" id="rowFilter" placeholder="Type player name, initials, or stats..." autocomplete="off">
+                <button type="button" id="clearFilter" class="clear-btn">Clear</button>
+            </div>
+            <span class="match-count" id="matchCount">Showing <?= count($players) ?> players</span>
+        </div>
+
         <!-- Table wrapper guards the layout from layout shifts caused by high text/page zoom -->
         <div class="table-wrapper">
-            <table>
+            <table id="playersTable">
                 <thead>
                     <tr>
                         <th>#</th> <!-- Added Header -->
@@ -163,7 +239,7 @@ try {
                     <?php if (!empty($players)): ?>
                          <?php $rank = 1; // Initialize counter ?>
                         <?php foreach ($players as $player): ?>
-                            <tr>
+                            <tr class="player-row">
                                 <td class="rank-col"><?= $rank++ ?></td> <!-- Print and increment -->
                                 <td><span class="player-name"><?= htmlspecialchars($player['name']) ?></span></td>
                                 <td><span class="initials-tag"><?= htmlspecialchars($player['initials']) ?></span></td>
@@ -180,6 +256,10 @@ try {
                                 <td><?= htmlspecialchars($player['gamesWon']) ?></td>
                             </tr>
                         <?php endforeach; ?>
+                         <!-- Hidden row shown only when search has 0 matches -->
+                        <tr id="noMatchesRow" style="display: none;">
+                            <td colspan="9" style="text-align: center; color: #718096; padding: 2rem;">No matching players found.</td>
+                        </tr>
                     <?php else: ?>
                         <tr>
                             <td colspan="9" style="text-align: center; color: #718096; padding: 2rem;">No players found in the database.</td>
@@ -189,6 +269,45 @@ try {
             </table>
         </div>
     </div>
+
+    <script>
+        const filterInput = document.getElementById('rowFilter');
+        const clearBtn = document.getElementById('clearFilter');
+        const matchCount = document.getElementById('matchCount');
+        const playerRows = document.querySelectorAll('#playersTable tbody tr.player-row');
+        const noMatchesRow = document.getElementById('noMatchesRow');
+
+        function filterTable() {
+            const query = filterInput.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            clearBtn.style.display = query.length > 0 ? 'inline-block' : 'none';
+
+            playerRows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                if (rowText.includes(query)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (noMatchesRow) {
+                noMatchesRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+
+            matchCount.textContent = `Showing ${visibleCount} of ${playerRows.length} players`;
+        }
+
+        filterInput.addEventListener('input', filterTable);
+
+        clearBtn.addEventListener('click', () => {
+            filterInput.value = '';
+            filterTable();
+            filterInput.focus();
+        });
+    </script>
 
 </body>
 </html>
