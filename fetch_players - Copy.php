@@ -133,15 +133,18 @@ try {
 
         /* The Magic Wrapper: If zoom forces the table to grow wider than the screen, 
            this card captures it safely and allows horizontal scrolling inside the card only. */
-        .table-wrapper {
-            width: 100%;
-            background: #ffffff; 
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS Safari */
-            border: 1px solid #e0e0e0;
-        }
+        /* The Magic Wrapper: Handles both horizontal AND vertical scrolling inside the card */
+.table-wrapper {
+    width: 100%;
+    max-height: 70vh; /* Constrains height so internal vertical scrolling activates */
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow-x: auto;
+    overflow-y: auto; /* Enables vertical scrolling for data rows */
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e0e0e0;
+}
 
         table { 
             width: 100%; 
@@ -155,14 +158,15 @@ try {
             font-size: 0.95rem;
         }
 
-        th { 
-            background-color: #2e7d32; 
-            color: white; 
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            position: sticky;
-            top: 0;
-        }
+       th {
+    background-color: #2e7d32;
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10; /* Ensures header stays layered above scrolling body cells */
+}
 
         tr {
             border-bottom: 1px solid #edf2f7;
@@ -202,6 +206,51 @@ try {
             border-radius: 6px;
             display: inline-block;
         }
+
+        /* 1. Pin the # (Rank) column at the far left */
+th:nth-child(1),
+td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 50px;
+    min-width: 50px;
+}
+
+/* 2. Pin the Name column right next to the # column (50px from left) */
+th:nth-child(2),
+td:nth-child(2) {
+    position: sticky;
+    left: 50px;
+}
+
+/* Solid backgrounds for sticky body cells */
+td:nth-child(1),
+td:nth-child(2) {
+    background-color: #ffffff;
+    z-index: 5;
+}
+
+/* Subtle divider shadow on the right edge of the Name column */
+td:nth-child(2) {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Maintain hover highlight across sticky columns */
+tr:hover td:nth-child(1),
+tr:hover td:nth-child(2) {
+    background-color: #f8fafc;
+}
+
+/* Top-left corner headers stay above everything */
+th:nth-child(1),
+th:nth-child(2) {
+    z-index: 20;
+}
+
+th:nth-child(2) {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
     </style>
 </head>
 <body>
@@ -224,7 +273,7 @@ try {
             <table id="playersTable">
                 <thead>
                     <tr>
-                        <th>#</th> <!-- Added Header -->
+                        <th>pos</th> <!-- Added Header -->
                         <th>Name</th>
                         <th>Initials</th>
                         <th>partcipationPoints</th>
