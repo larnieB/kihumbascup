@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8-Ball Prop Betting</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>🎱 kihumba's bet</h1>
+      <p>Predict the player, the ball (1–15), and the exact pocket.</p>
+    </header>
+
+    <main class="betting-grid">
+      <!-- Left Column: Selections -->
+      <section class="selection-panel">
+        <!-- Step 1: Player Selection -->
+        <div class="card">
+          <h2>1. Select Player</h2>
+          <div class="player-options" id="player-options">
+            <button type="button" class="player-btn" data-player="Player 1" data-odds="1.85">
+              <span class="player-name">Player 1 (Home)</span>
+              <span class="odds-badge">1.85x</span>
+            </button>
+            <button type="button" class="player-btn" data-player="Player 2" data-odds="2.10">
+              <span class="player-name">Player 2 (Away)</span>
+              <span class="odds-badge">2.10x</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Ball Selection (1-15) -->
+        <div class="card">
+          <h2>2. Select Ball (1–15)</h2>
+          <div class="ball-grid" id="ball-grid">
+            <!-- Balls 1-15 generated via JS -->
+          </div>
+        </div>
+
+        <!-- Step 3: Pocket Selection -->
+        <div class="card">
+          <h2>3. Select Target Pocket</h2>
+          <div class="pool-table">
+            <div class="table-felt">
+              <div class="center-spot"></div>
+              <div class="head-string"></div>
+            </div>
+            <!-- 6 Pockets -->
+            <button type="button" class="pocket top-left" data-pocket="Top Left" data-odds="2.5">TL</button>
+            <button type="button" class="pocket top-middle" data-pocket="Top Middle" data-odds="3.0">TM</button>
+            <button type="button" class="pocket top-right" data-pocket="Top Right" data-odds="2.5">TR</button>
+            <button type="button" class="pocket bottom-left" data-pocket="Bottom Left" data-odds="2.5">BL</button>
+            <button type="button" class="pocket bottom-middle" data-pocket="Bottom Middle" data-odds="3.0">BM</button>
+            <button type="button" class="pocket bottom-right" data-pocket="Bottom Right" data-odds="2.5">BR</button>
+          </div>
+          <p class="hint">Corner pockets: 2.5x | Side pockets: 3.0x</p>
+        </div>
+      </section>
+
+      <!-- Right Column: Bet Slip -->
+      <aside class="bet-slip card">
+        <h2>Bet Slip</h2>
+        <div class="slip-details">
+          <div class="slip-row">
+            <span>Player:</span>
+            <strong id="summary-player">Not selected</strong>
+          </div>
+          <div class="slip-row">
+            <span>Ball:</span>
+            <strong id="summary-ball">Not selected</strong>
+          </div>
+          <div class="slip-row">
+            <span>Pocket:</span>
+            <strong id="summary-pocket">Not selected</strong>
+          </div>
+          <div class="slip-row highlight">
+            <span>Combined Odds:</span>
+            <strong id="summary-odds">0.00x</strong>
+          </div>
+        </div>
+
+        <div class="stake-control">
+          <label for="stake-input">Stake Amount ($)</label>
+          <input type="number" id="stake-input" min="1" step="1" value="10" placeholder="Enter stake" />
+          <div class="quick-stakes">
+            <button type="button" class="quick-btn" data-amount="5">$5</button>
+            <button type="button" class="quick-btn" data-amount="20">$20</button>
+            <button type="button" class="quick-btn" data-amount="50">$50</button>
+            <button type="button" class="quick-btn" data-amount="100">$100</button>
+          </div>
+        </div>
+
+        <div class="payout-box">
+          <span>Potential Payout</span>
+          <div class="payout-amount" id="potential-payout">$0.00</div>
+        </div>
+
+        <button type="button" id="place-bet-btn" class="submit-btn" disabled>
+          Complete Selections to Bet
+        </button>
+
+        <div id="bet-history" class="bet-history">
+          <h3>Active Bets</h3>
+          <ul id="history-list"></ul>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

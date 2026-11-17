@@ -9,7 +9,7 @@
 
    when I was first thinking of this, I knew that input from the real world and into the database was 
    going to be a challenge. My first thought was the use of specialized cameras that can track ball 
-   movement and feed that data into the game. This ofcourse requires resources (both knowledge and financial wise) 
+   movement and feed that data into the computer. This ofcourse requires resources (both knowledge and financial wise) 
    that I don't possess at the moment. So I resulted into the simpler method of using images which also 
    has the advantage of keeping records as evidence of games which in turn reduces disputes. I then 
    analysed the images 09/10/2026 and came up with my first Raw Data Table(RDT). Then from the RDT I 
@@ -21,7 +21,7 @@
 10/10/2026
 
   -Second record of a game. I repeated what I did the previous day and I came up with a table with the 
-  following fields name, points, average, games, days, initials, marks marks average. It is clear at this
+  following fields name, points, average, games, days, initials, marks, marks average. It is clear at this
   point that all the data points are useful but for different purposes. One of the purpose is a leaderboard
   for the public and two is that with this data, I can make deductions about the games that are played, the
   players and enable me make better and informed decisions. So I had to seperate Public data and non-public data.
@@ -41,7 +41,15 @@
 On Friday 09/10/2026, I created a html file called Dynamic leaderboard Generator. This serves as an interface for 
 inputing the game data into the database. It's functionality is that you input number of players then it dynamically
 generates input fields. The first version of this file just had two input fields, (name and points). This file
-can also be used to input cummlative game data for and period of time and any number of games. If I can be able
+can also be used to input cummlative game data for any period of time and any number of games. If I can be able
 to use this file to input game data after each game, I would eliminate the need for images, RDT and Day's summary. But It isn't 
 applicable when you are working alone given the nature of chalking were there isn't enough time between Games
 to be able to feed that data. This would need extra hands.
+
+Monday 16/11/2026
+It was a particularly rainy night and Mercy lied to her aunt that she had travelled up country so we could cuddle up in
+bed. That means I go to vintage late, at around midday.But it being a Monday, I ofcourse knew it would be a boring day.
+When I arrived I found, Harry, Dan, Cyrus, Vinny (later joined by FR and steve). Then Dan challenged me to a game and
+I would start 30 marks ahead. I lost those games and after cyrus and Dan played one game, DR KUshi(QR) challenged me to a game.
+Sherrif and Dan did the side bet of who would pot the 10. Which I did. That was the domino that led me to change plans to the
+immediate comensment of kihumba's billiards 2.0.0
