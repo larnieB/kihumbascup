@@ -30,49 +30,62 @@ const state = {
 
 // DOM Elements
 const ballGrid = document.getElementById("ball-grid");
-const playerButtons = document.querySelectorAll(".player-btn");
 const pocketButtons = document.querySelectorAll(".pocket");
 const stakeInput = document.getElementById("stake-input");
 const quickStakeButtons = document.querySelectorAll(".quick-btn");
 const placeBetBtn = document.getElementById("place-bet-btn");
 const historyList = document.getElementById("history-list");
 
+// 1. Dynamic Player Fetch + Click Listener Fix
 document.addEventListener('DOMContentLoaded', () => {
-    const playerOptionsContainer = document.getElementById('player-options');
+  const playerOptionsContainer = document.getElementById('player-options');
 
-    fetch('get_active_game.php')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success' && data.noOfPlayers > 0) {
-                playerOptionsContainer.innerHTML = ''; // Clear container
+  fetch('get_active_game.php')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success' && data.noOfPlayers > 0) {
+        playerOptionsContainer.innerHTML = '';
+        const defaultOdds = (data.noOfPlayers * 0.90).toFixed(2);
 
-                // Optional: Calculate balanced default odds based on player count
-                const defaultOdds = (data.noOfPlayers * 0.90).toFixed(2);
+        for (let i = 1; i <= data.noOfPlayers; i++) {
+          const playerName = `Player ${i}`;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'player-btn';
+          btn.dataset.player = playerName;
+          btn.dataset.odds = defaultOdds;
 
-                for (let i = 1; i <= data.noOfPlayers; i++) {
-                    const playerName = `Player ${i}`;
-                    
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'player-btn';
-                    btn.dataset.player = playerName;
-                    btn.dataset.odds = defaultOdds;
+          btn.innerHTML = `
+            <span class="player-name">${playerName}</span>
+            <span class="odds-badge">${defaultOdds}x</span>
+          `;
 
-                    btn.innerHTML = `
-                        <span class="player-name">${playerName}</span>
-                        <span class="odds-badge">${defaultOdds}x</span>
-                    `;
-
-                    playerOptionsContainer.appendChild(btn);
-                }
+          // Attach click listener directly when creating the button
+          btn.addEventListener('click', () => {
+            // Allow toggling off if clicked again
+            if (btn.classList.contains('selected')) {
+              btn.classList.remove('selected');
+              state.player = null;
+              state.playerOdds = 0;
             } else {
-                playerOptionsContainer.innerHTML = '<p>No active game right now.</p>';
+              document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+              state.player = btn.dataset.player;
+              state.playerOdds = parseFloat(btn.dataset.odds);
             }
-        })
-        .catch(error => {
-            console.error('Error fetching active game:', error);
-            playerOptionsContainer.innerHTML = '<p>Failed to load players.</p>';
-        });
+            updateBetSlip();
+          });
+
+          playerOptionsContainer.appendChild(btn);
+        }
+      } else {
+        playerOptionsContainer.innerHTML = '<p>No active game right now.</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching active game:', error);
+      playerOptionsContainer.innerHTML = '<p>Failed to load players.</p>';
+    });
 });
 
 // 1. Render Balls 1-15
@@ -96,11 +109,18 @@ function renderBalls() {
       <span class="ball-odds">${ball.odds.toFixed(1)}x</span>
     `;
 
+    // Replace the old listener with this toggleable version:
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".ball-btn").forEach((b) => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      state.ball = `Ball #${ball.number} (${ball.type})`;
-      state.ballOdds = ball.odds;
+      if (btn.classList.contains("selected")) {
+        btn.classList.remove("selected");
+        state.ball = null;
+        state.ballOdds = 0;
+      } else {
+        document.querySelectorAll(".ball-btn").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        state.ball = `Ball #${ball.number} (${ball.type})`;
+        state.ballOdds = ball.odds;
+      }
       updateBetSlip();
     });
 
@@ -108,27 +128,33 @@ function renderBalls() {
   });
 }
 
-// 2. Player Selection Listeners
-playerButtons.forEach((btn) => {
+
+
+
+// 2. Pocket Selection Listeners (also allows toggling off)
+pocketButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    playerButtons.forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    state.player = btn.dataset.player;
-    state.playerOdds = parseFloat(btn.dataset.odds);
+    if (btn.classList.contains("selected")) {
+      btn.classList.remove("selected");
+      state.pocket = null;
+      state.pocketOdds = 0;
+    } else {
+      pocketButtons.forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      state.pocket = btn.dataset.pocket;
+      state.pocketOdds = parseFloat(btn.dataset.odds);
+    }
     updateBetSlip();
   });
 });
 
-// 3. Pocket Selection Listeners
-pocketButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    pocketButtons.forEach((b) => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    state.pocket = btn.dataset.pocket;
-    state.pocketOdds = parseFloat(btn.dataset.odds);
-    updateBetSlip();
-  });
-});
+// 3. Helper to calculate combined odds safely when some options are null
+function getCombinedOdds() {
+  const pOdds = state.player ? state.playerOdds : 1;
+  const bOdds = state.ball ? state.ballOdds : 1;
+  const kOdds = state.pocket ? state.pocketOdds : 1;
+  return pOdds * bOdds * kOdds;
+}
 
 // 4. Stake Input & Quick Buttons
 stakeInput.addEventListener("input", (e) => {
@@ -145,16 +171,18 @@ quickStakeButtons.forEach((btn) => {
   });
 });
 
-// 5. Update Bet Slip Summary & Odds Calculation
+// 4. Update Bet Slip Summary & Odds Calculation
 function updateBetSlip() {
-  document.getElementById("summary-player").textContent = state.player || "Not selected";
-  document.getElementById("summary-ball").textContent = state.ball || "Not selected";
-  document.getElementById("summary-pocket").textContent = state.pocket || "Not selected";
+  document.getElementById("summary-player").textContent = state.player || "Any Player";
+  document.getElementById("summary-ball").textContent = state.ball || "Any Ball";
+  document.getElementById("summary-pocket").textContent = state.pocket || "Any Pocket";
 
-  const isComplete = state.player && state.ball && state.pocket && state.stake > 0;
+  // Require at least a Player OR a Pocket, plus a valid stake
+  const hasSelection = Boolean(state.player || state.pocket);
+  const isComplete = hasSelection && state.stake > 0;
 
-  if (state.player && state.ball && state.pocket) {
-    const combinedOdds = state.playerOdds * state.ballOdds * state.pocketOdds;
+  if (hasSelection) {
+    const combinedOdds = getCombinedOdds();
     const payout = combinedOdds * state.stake;
 
     document.getElementById("summary-odds").textContent = `${combinedOdds.toFixed(2)}x`;
@@ -165,18 +193,22 @@ function updateBetSlip() {
   }
 
   placeBetBtn.disabled = !isComplete;
-  placeBetBtn.textContent = isComplete ? "Place Prop Bet" : "Complete Selections to Bet";
+  placeBetBtn.textContent = isComplete ? "Place Prop Bet" : "Select a Player or Pocket";
 }
 
-// 6. Handle Bet Placement
+// 5. Handle Bet Placement
 placeBetBtn.addEventListener("click", () => {
-  const combinedOdds = (state.playerOdds * state.ballOdds * state.pocketOdds).toFixed(2);
+  const combinedOdds = getCombinedOdds().toFixed(2);
   const payout = (combinedOdds * state.stake).toFixed(2);
+
+  const playerText = state.player || "Any Player";
+  const ballText = state.ball || "Any Ball";
+  const pocketText = state.pocket || "Any Pocket";
 
   const li = document.createElement("li");
   li.className = "history-item";
   li.innerHTML = `
-    <strong>${state.player}</strong> to pot <strong>${state.ball}</strong> in <strong>${state.pocket}</strong><br/>
+    <strong>${playerText}</strong> to pot <strong>${ballText}</strong> in <strong>${pocketText}</strong><br/>
     Stake: $${state.stake.toFixed(2)} @ ${combinedOdds}x → <strong>Win $${payout}</strong>
   `;
 
@@ -184,8 +216,11 @@ placeBetBtn.addEventListener("click", () => {
 
   // Reset selections for next bet
   state.player = null;
+  state.playerOdds = 0;
   state.ball = null;
+  state.ballOdds = 0;
   state.pocket = null;
+  state.pocketOdds = 0;
   document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
   updateBetSlip();
 });
