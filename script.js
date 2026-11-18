@@ -190,56 +190,79 @@ document.getElementById("mobile-logout-btn")?.addEventListener("click", handleLo
 
 
 // 1. Dynamic Player Fetch + Click Listener Fix
-document.addEventListener('DOMContentLoaded', () => {
+// --- Live Game State Stream (Auto-updates Player Buttons) ---
+let activeGameId = null;
+
+function renderPlayerButtons(data) {
   const playerOptionsContainer = document.getElementById('player-options');
+  if (!playerOptionsContainer) return;
 
-  fetch('get_active_game.php')
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success' && data.noOfPlayers > 0) {
-        playerOptionsContainer.innerHTML = '';
-        const defaultOdds = (data.noOfPlayers * 0.90).toFixed(2);
+  // Avoid re-rendering if the exact same game is already displayed
+  if (data.status === 'success' && data.gameId === activeGameId) {
+    return;
+  }
 
-        for (let i = 1; i <= data.noOfPlayers; i++) {
-          const playerName = `Player ${i}`;
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'player-btn';
-          btn.dataset.player = playerName;
-          btn.dataset.odds = defaultOdds;
+  // Reset any selected player when a new game starts or ends
+  state.player = null;
+  state.playerOdds = 0;
+  updateBetSlip();
 
-          btn.innerHTML = `
-            <span class="player-name">${playerName}</span>
-            <span class="odds-badge">${defaultOdds}x</span>
-          `;
+  if (data.status === 'success' && data.noOfPlayers > 0) {
+    activeGameId = data.gameId;
+    playerOptionsContainer.innerHTML = '';
+    const defaultOdds = (data.noOfPlayers * 0.90).toFixed(2);
 
-          // Attach click listener directly when creating the button
-          btn.addEventListener('click', () => {
-            // Allow toggling off if clicked again
-            if (btn.classList.contains('selected')) {
-              btn.classList.remove('selected');
-              state.player = null;
-              state.playerOdds = 0;
-            } else {
-              document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('selected'));
-              btn.classList.add('selected');
-              state.player = btn.dataset.player;
-              state.playerOdds = parseFloat(btn.dataset.odds);
-            }
-            updateBetSlip();
-          });
+    for (let i = 1; i <= data.noOfPlayers; i++) {
+      const playerName = `Player ${i}`;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'player-btn';
+      btn.dataset.player = playerName;
+      btn.dataset.odds = defaultOdds;
 
-          playerOptionsContainer.appendChild(btn);
+      btn.innerHTML = `
+        <span class="player-name">${playerName}</span>
+        <span class="odds-badge">${defaultOdds}x</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('selected')) {
+          btn.classList.remove('selected');
+          state.player = null;
+          state.playerOdds = 0;
+        } else {
+          document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          state.player = btn.dataset.player;
+          state.playerOdds = parseFloat(btn.dataset.odds);
         }
-      } else {
-        playerOptionsContainer.innerHTML = '<p>No active game right now.</p>';
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching active game:', error);
-      playerOptionsContainer.innerHTML = '<p>Failed to load players.</p>';
-    });
+        updateBetSlip();
+      });
+
+      playerOptionsContainer.appendChild(btn);
+    }
+  } else {
+    activeGameId = null;
+    playerOptionsContainer.innerHTML = '<p>No active game right now.</p>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Load initial state immediately
+  fetch('get_active_game.php')
+    .then(res => res.json())
+    .then(data => renderPlayerButtons(data))
+    .catch(err => console.error('Initial game fetch error:', err));
+
+  // 2. Subscribe to live updates via Server-Sent Events
+  const gameStream = new EventSource('game_stream.php');
+
+  gameStream.addEventListener('gameUpdate', (event) => {
+    const data = JSON.parse(event.data);
+    renderPlayerButtons(data);
+  });
 });
+
 
 // 1. Render Balls 1-15
 function renderBalls() {
