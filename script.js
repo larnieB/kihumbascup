@@ -37,6 +37,44 @@ const quickStakeButtons = document.querySelectorAll(".quick-btn");
 const placeBetBtn = document.getElementById("place-bet-btn");
 const historyList = document.getElementById("history-list");
 
+document.addEventListener('DOMContentLoaded', () => {
+    const playerOptionsContainer = document.getElementById('player-options');
+
+    fetch('get_active_game.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.noOfPlayers > 0) {
+                playerOptionsContainer.innerHTML = ''; // Clear container
+
+                // Optional: Calculate balanced default odds based on player count
+                const defaultOdds = (data.noOfPlayers * 0.90).toFixed(2);
+
+                for (let i = 1; i <= data.noOfPlayers; i++) {
+                    const playerName = `Player ${i}`;
+                    
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'player-btn';
+                    btn.dataset.player = playerName;
+                    btn.dataset.odds = defaultOdds;
+
+                    btn.innerHTML = `
+                        <span class="player-name">${playerName}</span>
+                        <span class="odds-badge">${defaultOdds}x</span>
+                    `;
+
+                    playerOptionsContainer.appendChild(btn);
+                }
+            } else {
+                playerOptionsContainer.innerHTML = '<p>No active game right now.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching active game:', error);
+            playerOptionsContainer.innerHTML = '<p>Failed to load players.</p>';
+        });
+});
+
 // 1. Render Balls 1-15
 function renderBalls() {
   BALLS.forEach((ball) => {
