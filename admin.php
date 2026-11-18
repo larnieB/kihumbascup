@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Optional: Deactivate any previously active games first
-            // $pdo->exec("UPDATE games SET active = 0 WHERE active = 1");
+             $pdo->exec("UPDATE games SET active = 0 WHERE active = 1");
 
             // 5. Prepare and execute the INSERT query
             // Setting 'active' to 1 represents true for tinyint(1)
