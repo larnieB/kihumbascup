@@ -350,33 +350,76 @@ function updateBetSlip() {
 }
 
 // 5. Handle Bet Placement
-placeBetBtn.addEventListener("click", () => {
-  const combinedOdds = getCombinedOdds().toFixed(2);
-  const payout = (combinedOdds * state.stake).toFixed(2);
+placeBetBtn.addEventListener("click", async () => {
+  // 1. Require login
+  if (!currentUser) {
+    openAuthModal("login");
+    return;
+  }
 
-  const playerText = state.player || "Any Player";
-  const ballText = state.ball || "Any Ball";
-  const pocketText = state.pocket || "Any Pocket";
+  // 2. Check wallet balance
+  const currentBalance = parseFloat(currentUser.balance);
+  if (state.stake > currentBalance) {
+    alert("Insufficient wallet balance. Please deposit funds first.");
+    return;
+  }
 
-  const li = document.createElement("li");
-  li.className = "history-item";
-  li.innerHTML = `
-    <strong>${playerText}</strong> to pot <strong>${ballText}</strong> in <strong>${pocketText}</strong><br/>
-    Stake: $${state.stake.toFixed(2)} @ ${combinedOdds}x → <strong>Win $${payout}</strong>
-  `;
+  const combinedOdds = parseFloat(getCombinedOdds().toFixed(2));
+  const payout = parseFloat((combinedOdds * state.stake).toFixed(2));
 
-  historyList.prepend(li);
+  const payload = {
+    player: state.player || "Any Player",
+    ball: state.ball || "Any Ball",
+    pocket: state.pocket || "Any Pocket",
+    odds: combinedOdds,
+    stake: state.stake,
+    potentialPayout: payout
+  };
 
-  // Reset selections for next bet
-  state.player = null;
-  state.playerOdds = 0;
-  state.ball = null;
-  state.ballOdds = 0;
-  state.pocket = null;
-  state.pocketOdds = 0;
-  document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
-  updateBetSlip();
+  placeBetBtn.disabled = true;
+  placeBetBtn.textContent = "Placing Bet...";
+
+  try {
+    const res = await fetch("place_bet.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.status === "success") {
+      // 3. Update balance in memory and navbar
+      currentUser.balance = data.newBalance;
+      document.getElementById("wallet-balance").textContent = `$${parseFloat(data.newBalance).toFixed(2)}`;
+
+      // 4. Add to Active Bets list
+      const li = document.createElement("li");
+      li.className = "history-item";
+      li.innerHTML = `
+        <strong>${payload.player}</strong> to pot <strong>${payload.ball}</strong> in <strong>${payload.pocket}</strong><br/>
+        Stake: $${payload.stake.toFixed(2)} @ ${combinedOdds.toFixed(2)}x → <strong>Win $${payout.toFixed(2)}</strong>
+      `;
+      historyList.prepend(li);
+
+      // 5. Reset selections
+      state.player = null;
+      state.playerOdds = 0;
+      state.ball = null;
+      state.ballOdds = 0;
+      state.pocket = null;
+      state.pocketOdds = 0;
+      document.querySelectorAll(".selected").forEach((el) => el.classList.remove("selected"));
+    } else {
+      alert(data.message || "Could not place bet.");
+    }
+  } catch (err) {
+    console.error("Bet error:", err);
+    alert("Network error placing bet.");
+  } finally {
+    updateBetSlip();
+  }
 });
+
 
 // Initialize
 renderBalls();
