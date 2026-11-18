@@ -28,6 +28,8 @@ const state = {
   stake: 10
 };
 
+
+
 // DOM Elements
 const ballGrid = document.getElementById("ball-grid");
 const pocketButtons = document.querySelectorAll(".pocket");
@@ -35,6 +37,157 @@ const stakeInput = document.getElementById("stake-input");
 const quickStakeButtons = document.querySelectorAll(".quick-btn");
 const placeBetBtn = document.getElementById("place-bet-btn");
 const historyList = document.getElementById("history-list");
+
+// --- Navbar, Mobile Menu & Auth Modal UI ---
+const hamburgerBtn = document.getElementById("hamburger-btn");
+const mobileMenu = document.getElementById("mobile-menu");
+const profileMenuBtn = document.getElementById("profile-menu-btn");
+const profileDropdownMenu = document.getElementById("profile-dropdown-menu");
+
+const authModal = document.getElementById("auth-modal");
+const closeAuthModal = document.getElementById("close-auth-modal");
+const authTabs = document.querySelectorAll(".auth-tab");
+const loginForm = document.getElementById("login-form");
+const signupForm = document.getElementById("signup-form");
+
+// Toggle mobile hamburger menu
+hamburgerBtn?.addEventListener("click", () => {
+  mobileMenu.classList.toggle("hidden");
+});
+
+// Toggle desktop profile dropdown
+profileMenuBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  profileDropdownMenu.classList.toggle("hidden");
+});
+
+document.addEventListener("click", () => {
+  profileDropdownMenu?.classList.add("hidden");
+});
+
+// Helper to open modal on either 'login' or 'signup' tab
+function openAuthModal(defaultTab = "login") {
+  mobileMenu.classList.add("hidden");
+  authModal.classList.remove("hidden");
+  switchAuthTab(defaultTab);
+}
+
+function switchAuthTab(tabName) {
+  authTabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === tabName));
+  loginForm.classList.toggle("hidden", tabName !== "login");
+  signupForm.classList.toggle("hidden", tabName !== "signup");
+}
+
+// Wire up all Login / Sign Up triggers (desktop + mobile)
+document.getElementById("open-login-btn")?.addEventListener("click", () => openAuthModal("login"));
+document.getElementById("mobile-login-btn")?.addEventListener("click", () => openAuthModal("login"));
+document.getElementById("open-signup-btn")?.addEventListener("click", () => openAuthModal("signup"));
+document.getElementById("mobile-signup-btn")?.addEventListener("click", () => openAuthModal("signup"));
+
+closeAuthModal?.addEventListener("click", () => authModal.classList.add("hidden"));
+authModal?.addEventListener("click", (e) => {
+  if (e.target === authModal) authModal.classList.add("hidden");
+});
+
+authTabs.forEach((tab) => {
+  tab.addEventListener("click", () => switchAuthTab(tab.dataset.tab));
+});
+
+// --- Authentication State & API Handlers ---
+let currentUser = null;
+
+function setAuthState(user) {
+  currentUser = user;
+  const isLoggedIn = Boolean(user);
+
+  document.getElementById("guest-controls")?.classList.toggle("hidden", isLoggedIn);
+  document.getElementById("mobile-guest-links")?.classList.toggle("hidden", isLoggedIn);
+  document.getElementById("user-controls")?.classList.toggle("hidden", !isLoggedIn);
+  document.getElementById("mobile-user-links")?.classList.toggle("hidden", !isLoggedIn);
+
+  if (isLoggedIn) {
+    document.getElementById("nav-username").textContent = user.username;
+    document.getElementById("user-avatar").textContent = user.username.charAt(0).toUpperCase();
+    document.getElementById("wallet-balance").textContent = `$${parseFloat(user.balance).toFixed(2)}`;
+  }
+}
+
+// Check active session when page loads
+fetch("check_session.php")
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.status === "success") setAuthState(data.user);
+  });
+
+// Handle Sign Up Submit
+signupForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById("signup-error");
+  errorEl.classList.add("hidden");
+
+  const payload = {
+    username: document.getElementById("signup-username").value.trim(),
+    phoneNumber: document.getElementById("signup-phone").value.trim(),
+    email: document.getElementById("signup-email").value.trim(),
+    password: document.getElementById("signup-password").value
+  };
+
+  const res = await fetch("register.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+
+  if (data.status === "success") {
+    setAuthState(data.user);
+    authModal.classList.add("hidden");
+    signupForm.reset();
+  } else {
+    errorEl.textContent = data.message || "Sign up failed.";
+    errorEl.classList.remove("hidden");
+  }
+});
+
+// Handle Log In Submit
+loginForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById("login-error");
+  errorEl.classList.add("hidden");
+
+  const payload = {
+    identifier: document.getElementById("login-email").value.trim(),
+    password: document.getElementById("login-password").value
+  };
+
+  const res = await fetch("login.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+
+  if (data.status === "success") {
+    setAuthState(data.user);
+    authModal.classList.add("hidden");
+    loginForm.reset();
+  } else {
+    errorEl.textContent = data.message || "Invalid credentials.";
+    errorEl.classList.remove("hidden");
+  }
+});
+
+// Handle Log Out (Desktop + Mobile)
+async function handleLogout() {
+  await fetch("logout.php");
+  setAuthState(null);
+  mobileMenu?.classList.add("hidden");
+}
+
+document.getElementById("logout-btn")?.addEventListener("click", handleLogout);
+document.getElementById("mobile-logout-btn")?.addEventListener("click", handleLogout);
+
+
 
 // 1. Dynamic Player Fetch + Click Listener Fix
 document.addEventListener('DOMContentLoaded', () => {

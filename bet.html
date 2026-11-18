@@ -4,12 +4,83 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>8-Ball Prop Betting</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
+
 </head>
 <body>
+
+<!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand">🎱 kihumba's bet</a>
+
+      <!-- Desktop Menu Links -->
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#" class="active">Betting Table</a></li>
+        <li><a href="#bet-history">My Bets</a></li>
+        <li><a href="#" id="nav-transactions">Transactions</a></li>
+      </ul>
+
+      <!-- Right Controls: Wallet & Auth/Profile -->
+      <div class="nav-actions">
+        <!-- Shown when LOGGED IN -->
+        <div class="user-controls hidden" id="user-controls">
+          <div class="wallet-pill">
+            <span class="wallet-label">Balance:</span>
+            <strong id="wallet-balance">$0.00</strong>
+            <button type="button" class="deposit-btn" id="open-deposit-btn" title="Deposit Funds">+</button>
+          </div>
+
+          <div class="profile-dropdown">
+            <button type="button" class="profile-btn" id="profile-menu-btn">
+              <span class="avatar" id="user-avatar">U</span>
+              <span class="username" id="nav-username">User</span>
+              <span class="chevron">▾</span>
+            </button>
+            <div class="dropdown-menu hidden" id="profile-dropdown-menu">
+              <a href="#" id="menu-profile">My Profile</a>
+              <a href="#" id="menu-deposit">Deposit / Withdraw</a>
+              <hr />
+              <button type="button" id="logout-btn" class="logout-item">Log Out</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shown when LOGGED OUT -->
+        <div class="guest-controls" id="guest-controls">
+          <button type="button" class="btn-outline" id="open-login-btn">Log In</button>
+          <button type="button" class="btn-primary" id="open-signup-btn">Sign Up</button>
+        </div>
+
+        <!-- Mobile Hamburger Button -->
+        <button type="button" class="hamburger" id="hamburger-btn" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Slide-Down Drawer -->
+    <div class="mobile-menu hidden" id="mobile-menu">
+      <a href="#" class="active">Betting Table</a>
+      <a href="#bet-history">My Bets</a>
+      <a href="#" class="mobile-transactions">Transactions</a>
+      <hr />
+      <div class="mobile-auth-section" id="mobile-guest-links">
+        <button type="button" class="btn-outline full-width" id="mobile-login-btn">Log In</button>
+        <button type="button" class="btn-primary full-width" id="mobile-signup-btn">Sign Up</button>
+      </div>
+      <div class="mobile-user-section hidden" id="mobile-user-links">
+        <a href="#">My Profile</a>
+        <a href="#">Deposit / Withdraw</a>
+        <button type="button" class="logout-item full-width" id="mobile-logout-btn">Log Out</button>
+      </div>
+    </div>
+  </nav>
+
   <div class="app-container">
     <header>
-      <h1>🎱 kihumba's bet</h1>
       <p>Predict the player, the ball (1–15), and the exact pocket.</p>
     </header>
 
@@ -101,6 +172,56 @@
       </aside>
     </main>
   </div>
+
+  <!-- Auth Modal (Login & Sign Up) -->
+  <div class="modal-overlay hidden" id="auth-modal">
+    <div class="modal-card">
+      <button type="button" class="modal-close" id="close-auth-modal">&times;</button>
+      
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">Log In</button>
+        <button type="button" class="auth-tab" data-tab="signup">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="login-email">Email or Username</label>
+          <input type="text" id="login-email" required placeholder="Enter email or username" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" />
+        </div>
+        <p class="form-error hidden" id="login-error"></p>
+        <button type="submit" class="submit-btn">Log In</button>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form id="signup-form" class="auth-form hidden">
+        <div class="form-group">
+          <label for="signup-username">Username</label>
+          <input type="text" id="signup-username" required placeholder="Choose a username" />
+        </div>
+        <div class="form-group">
+  <label for="signup-phone">Phone Number</label>
+  <input type="tel" id="signup-phone" required placeholder="e.g. 0712345678" />
+</div>
+
+        <div class="form-group">
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" required minlength="6" placeholder="Min. 6 characters" />
+        </div>
+        <p class="form-error hidden" id="signup-error"></p>
+        <button type="submit" class="submit-btn">Create Account</button>
+      </form>
+    </div>
+  </div>
+
 
   <script src="script.js"></script>
 </body>
