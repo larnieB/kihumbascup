@@ -32,8 +32,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Get the auto-generated ID of the new game
             $newGameId = $pdo->lastInsertId();
 
-            echo "Game #" . $newGameId . " started with " . htmlspecialchars($numberOfPlayers) . " players and set to active!";
-
+// Redirect to add_players.php and pass the game ID in the URL
+            header("Location: game.html?game_id=" . $newGameId);
+            exit();
         } catch (PDOException $e) {
             echo "Database error: " . $e->getMessage();
         }
