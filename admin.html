@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kihumba's cup admin</title>
+</head>
+<body>
+    <!-- Add type="button" so it doesn't submit the form -->
+    <button type="button">new game</button>
+
+    <!-- Wrap the input and submit button in a form -->
+    <form action="admin.php" method="POST">
+        <h2>enter NO of players</h2>
+        
+        <!-- 'name' is what PHP uses to find this data. 'type="number"' ensures only numbers are entered -->
+        <input type="number" name="num_players" min="2" required>
+        
+        <!-- 'type="submit"' triggers the form to send data to start_game.php -->
+        <button type="submit">start game</button>
+    </form>
+</body>
+</html>
